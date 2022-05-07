@@ -48,9 +48,9 @@ int main()
 	//studentsToFile(students, coursesPerStudent, numberOfStudents); //this frees all memory. Part B fails if this line runs. uncomment for testing (and comment out Part B)
 
 	//Part B
-	Student* transformedStudents = transformStudentArray(students, coursesPerStudent, numberOfStudents);
-	writeToBinFile("students.bin", transformedStudents, numberOfStudents);
-	Student* testReadStudents = readFromBinFile("students.bin");
+	//Student* transformedStudents = transformStudentArray(students, coursesPerStudent, numberOfStudents);
+	//writeToBinFile("students.bin", transformedStudents, numberOfStudents);
+	//Student* testReadStudents = readFromBinFile("students.bin");
 
 	//add code to free all arrays of struct Student
 
@@ -65,27 +65,27 @@ void countStudentsAndCourses(const char* fileName, int** coursesPerStudent, int*
 {
 	FILE* fp = fopen(fileName, "r");
 	assert(fp);
+	rewind(fp);
 
 	*numberOfStudents = 0;
-	char* lineBuffer = (char*)malloc(MAX_LINE_LENGTH * sizeof(char));
+	char lineBuffer[MAX_LINE_LENGTH];
 
 	while (fgets(lineBuffer, MAX_LINE_LENGTH, fp))
 	{
-		*numberOfStudents++;
+		(*numberOfStudents)++;
 	}
 
 	rewind(fp);
 	int i = 0;
-	coursesPerStudent = (int**)malloc(*numberOfStudents * sizeof(int*));
 
 	while (fgets(lineBuffer, MAX_LINE_LENGTH, fp))
 	{
-		*(coursesPerStudent+i) = (int*)malloc(sizeof(int));
+		(*(coursesPerStudent+i)) = (int*)malloc(sizeof(int));
 		*(*(coursesPerStudent+i)) = countPipes(lineBuffer, MAX_LINE_LENGTH);
 		i++;
 	}
 
-	fclose(fileName);
+	fclose(fp);
 }
 
 int countPipes(const char* lineBuffer, int maxCount)
@@ -95,7 +95,7 @@ int countPipes(const char* lineBuffer, int maxCount)
 
 	int pipeCount = 0;
 
-	for (int i	= 0; i < maxCount && lineBuffer != '\0'; i++)
+	for (int i	= 0; i < maxCount && *lineBuffer != '\0'; i++)
 	{
 		if (*lineBuffer == '|')
 		{
@@ -110,17 +110,20 @@ int countPipes(const char* lineBuffer, int maxCount)
 
 char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, int* numberOfStudents)
 {
+	countStudentsAndCourses(fileName, coursesPerStudent, numberOfStudents);
+
 	// assign dynamic space for all students
 	char*** students = (char***)malloc(*numberOfStudents * sizeof(char**));
 
-	char* lineBuffer = (char*)malloc(MAX_LINE_LENGTH * sizeof(char));
+	char lineBuffer[MAX_LINE_LENGTH];
 	FILE* fp = fopen(fileName, "r");
+	assert(fp);
 	rewind(fp);
 
 	for (int i = 0; i < *numberOfStudents; i++)
 	{
 		// number of courses
-		int numberOfCourses = (*(*(coursesPerStudent + i))) + 1;
+		int numberOfCourses = ((*(*(coursesPerStudent + i)))*2)+1;
 
 		// assign dynamic space for current student
 		*(students + i) = (char**)malloc(numberOfCourses * sizeof(char*));
@@ -129,30 +132,70 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 		fgets(lineBuffer, MAX_LINE_LENGTH, fp);
 
 		char* token;
-		const char s[2] = "|";
+		const char s[2] = "|,";
 
-		for (int j = 0; j < numberOfCourses + 1; j++)
+		// get name
+		token = strtok(lineBuffer, s);
+
+		// assign space for student name
+		**(students+i) = (char*)malloc(strlen(token) * sizeof(char));
+
+		// insert name to array
+		**(students+i) = token;
+
+		int j = 1;
+
+		token = strtok(NULL, s);
+
+		while(token != NULL)
 		{
-			// get word
-			token = strtok(lineBuffer, s);
-
 			// assign space for student name or course
-			*(*(students + i)) = (char*)malloc(strlen(token) * sizeof(char));
+			*((*(students + i))+j) = (char*)malloc(strlen(token) * sizeof(char));
 
 			// insert name or course to array
-			*(*(students + i)) = token;
+			*((*(students + i)) + j) = token;
 
+			j++;
+
+			token = strtok(NULL, s);
 		}
 
 	}
 
 	fclose(fp);
 
+	return students;
 }
 
 void factorGivenCourse(char** const* students, const int* coursesPerStudent, int numberOfStudents, const char* courseName, int factor)
 {
-	//add code here
+	if (factor > 20 || factor < -20) 
+	{
+		printf("Factor out of range must be between -20 to 20");
+		return; 
+	}
+
+	for (int i = 0; i < numberOfStudents; i++)
+	{
+		int numberOfCourses = (*(coursesPerStudent + i) * 2);
+		for (int j = 1; j < numberOfCourses +1; j++)
+		{
+			char* currentCourse = *(*(students + i) + j);
+
+			// if course name found
+			if (strcmp(currentCourse, courseName) == 0)
+			{
+				// plus 1 to get to grade
+				// convert grade to int
+				int grade = atoi(*(*(students + i) + j + 1));
+				// add factor
+				grade += factor;
+				char* buffer[3];
+				// return factored grade to list
+				*(*(students + i) + j + 1) = _itoa(grade, buffer, 10);
+			}
+		}
+	}
 }
 
 void printStudentArray(const char* const* const* students, const int* coursesPerStudent, int numberOfStudents)
@@ -171,7 +214,28 @@ void printStudentArray(const char* const* const* students, const int* coursesPer
 
 void studentsToFile(char*** students, int* coursesPerStudent, int numberOfStudents)
 {
-	//add code here
+	FILE* fp = fopen("studentList.txt", "w");
+	assert(fp);
+	rewind(fp);
+
+	for (int i = 0; i < numberOfStudents; i++)
+	{
+		fputs(*(*(students + i)), fp);
+		
+		int numberOfCourses = (*(coursesPerStudent + i) * 2);
+		for (int j = 1; j < numberOfCourses + 1; j+=2)
+		{
+			char* currentCourse = *(*(students + i) + j);
+			char* currentGrade = *(*(students + i) + j + 1);
+			
+			fputc('|', fp);
+			fputs(currentCourse, fp);
+			fputc(',', fp);
+			fputs(currentGrade, fp);
+		}
+	}
+
+	fclose(fp);
 }
 
 void writeToBinFile(const char* fileName, Student* students, int numberOfStudents)
@@ -187,4 +251,13 @@ Student* readFromBinFile(const char* fileName)
 Student* transformStudentArray(char*** students, const int* coursesPerStudent, int numberOfStudents)
 {
 	//add code here
+}
+
+char* replace_char(char* str, char find, char replace) {
+	char* current_pos = strchr(str, find);
+	while (current_pos) {
+		*current_pos = replace;
+		current_pos = strchr(current_pos, find);
+	}
+	return str;
 }

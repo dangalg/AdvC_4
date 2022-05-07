@@ -19,14 +19,4 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\studentList.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\students.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-  </ItemGroup>
 </Project>

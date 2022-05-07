@@ -6,6 +6,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
+
+#define MAX_LINE_LENGTH 1023
 
 typedef struct StudentCourseGrade
 {
@@ -60,17 +63,91 @@ int main()
 
 void countStudentsAndCourses(const char* fileName, int** coursesPerStudent, int* numberOfStudents)
 {
-	//add code here
+	FILE* fp = fopen(fileName, "r");
+	assert(fp);
+
+	*numberOfStudents = 0;
+	char* lineBuffer = (char*)malloc(MAX_LINE_LENGTH * sizeof(char));
+
+	while (fgets(lineBuffer, MAX_LINE_LENGTH, fp))
+	{
+		*numberOfStudents++;
+	}
+
+	rewind(fp);
+	int i = 0;
+	coursesPerStudent = (int**)malloc(*numberOfStudents * sizeof(int*));
+
+	while (fgets(lineBuffer, MAX_LINE_LENGTH, fp))
+	{
+		*(coursesPerStudent+i) = (int*)malloc(sizeof(int));
+		*(*(coursesPerStudent+i)) = countPipes(lineBuffer, MAX_LINE_LENGTH);
+		i++;
+	}
+
+	fclose(fileName);
 }
 
 int countPipes(const char* lineBuffer, int maxCount)
 {
-	//add code here
+	if (maxCount <= 0) { return 0; }
+	if (lineBuffer == NULL) { return -1; }
+
+	int pipeCount = 0;
+
+	for (int i	= 0; i < maxCount && lineBuffer != '\0'; i++)
+	{
+		if (*lineBuffer == '|')
+		{
+			pipeCount++;
+		}
+
+		lineBuffer++;
+	}
+
+	return pipeCount;
 }
 
 char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, int* numberOfStudents)
 {
-	//add code here
+	// assign dynamic space for all students
+	char*** students = (char***)malloc(*numberOfStudents * sizeof(char**));
+
+	char* lineBuffer = (char*)malloc(MAX_LINE_LENGTH * sizeof(char));
+	FILE* fp = fopen(fileName, "r");
+	rewind(fp);
+
+	for (int i = 0; i < *numberOfStudents; i++)
+	{
+		// number of courses
+		int numberOfCourses = (*(*(coursesPerStudent + i))) + 1;
+
+		// assign dynamic space for current student
+		*(students + i) = (char**)malloc(numberOfCourses * sizeof(char*));
+
+		// get line from file
+		fgets(lineBuffer, MAX_LINE_LENGTH, fp);
+
+		char* token;
+		const char s[2] = "|";
+
+		for (int j = 0; j < numberOfCourses + 1; j++)
+		{
+			// get word
+			token = strtok(lineBuffer, s);
+
+			// assign space for student name or course
+			*(*(students + i)) = (char*)malloc(strlen(token) * sizeof(char));
+
+			// insert name or course to array
+			*(*(students + i)) = token;
+
+		}
+
+	}
+
+	fclose(fp);
+
 }
 
 void factorGivenCourse(char** const* students, const int* coursesPerStudent, int numberOfStudents, const char* courseName, int factor)

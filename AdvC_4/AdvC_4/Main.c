@@ -45,7 +45,7 @@ int main()
 	char*** students = makeStudentArrayFromFile("studentList.txt", &coursesPerStudent, &numberOfStudents);
 	factorGivenCourse(students, coursesPerStudent, numberOfStudents, "Advanced Topics in C", +5);
 	printStudentArray(students, coursesPerStudent, numberOfStudents);
-	//studentsToFile(students, coursesPerStudent, numberOfStudents); //this frees all memory. Part B fails if this line runs. uncomment for testing (and comment out Part B)
+	studentsToFile(students, coursesPerStudent, numberOfStudents); //this frees all memory. Part B fails if this line runs. uncomment for testing (and comment out Part B)
 
 	//Part B
 	//Student* transformedStudents = transformStudentArray(students, coursesPerStudent, numberOfStudents);
@@ -129,6 +129,18 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 
 		// get line from file
 		fgets(lineBuffer, MAX_LINE_LENGTH, fp);
+
+		// remove \n from end of line
+		char* pos;
+		if ((pos = strchr(lineBuffer, '\n')) != NULL)
+		{
+			*pos = '\0';
+		}
+		else 
+		{
+			/* input too long for buffer, flag error */
+		}
+			
 
 		char* token;
 		const char s[2] = "|,";
@@ -215,7 +227,7 @@ void printStudentArray(const char* const* const* students, const int* coursesPer
 
 void studentsToFile(char*** students, int* coursesPerStudent, int numberOfStudents)
 {
-	FILE* fp = fopen("studentList.txt", "w");
+	FILE* fp = fopen("studentList1.txt", "w");
 	assert(fp);
 	rewind(fp);
 
@@ -234,6 +246,7 @@ void studentsToFile(char*** students, int* coursesPerStudent, int numberOfStuden
 			fputc(',', fp);
 			fputs(currentGrade, fp);
 		}
+		fputc('\n', fp);
 	}
 
 	fclose(fp);
@@ -254,11 +267,3 @@ Student* transformStudentArray(char*** students, const int* coursesPerStudent, i
 	//add code here
 }
 
-char* replace_char(char* str, char find, char replace) {
-	char* current_pos = strchr(str, find);
-	while (current_pos) {
-		*current_pos = replace;
-		current_pos = strchr(current_pos, find);
-	}
-	return str;
-}

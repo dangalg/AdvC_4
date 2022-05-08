@@ -76,14 +76,13 @@ void countStudentsAndCourses(const char* fileName, int** coursesPerStudent, int*
 	}
 
 	rewind(fp);
+	int i = 0;
 
-	for (int i = 0; i < *numberOfStudents; i++)
+	while (fgets(lineBuffer, MAX_LINE_LENGTH, fp))
 	{
-		fgets(lineBuffer, MAX_LINE_LENGTH, fp);
 		(*(coursesPerStudent + i)) = (int*)malloc(sizeof(int));
 		*(*(coursesPerStudent + i)) = countPipes(lineBuffer, MAX_LINE_LENGTH);
 		i++;
-
 	}
 
 	fclose(fp);
@@ -96,7 +95,7 @@ int countPipes(const char* lineBuffer, int maxCount)
 
 	int pipeCount = 0;
 
-	for (int i	= 0; i < maxCount && *lineBuffer != '\0'; i++)
+	for (int i = 0; i < maxCount && *lineBuffer != '\0'; i++)
 	{
 		if (*lineBuffer == '|')
 		{
@@ -114,7 +113,7 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 	countStudentsAndCourses(fileName, coursesPerStudent, numberOfStudents);
 
 	// assign dynamic space for all students
-	char*** students = (char***)malloc((*numberOfStudents) * sizeof(char**));
+	char*** students = (char***)malloc(*numberOfStudents * sizeof(char**));
 
 	char lineBuffer[MAX_LINE_LENGTH];
 	FILE* fp = fopen(fileName, "r");
@@ -124,7 +123,7 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 	for (int i = 0; i < *numberOfStudents; i++)
 	{
 		// number of courses
-		int numberOfCourses = ((*(*(coursesPerStudent + i)))*2)+1;
+		int numberOfCourses = ((*(*(coursesPerStudent + i))) * 2) + 1;
 
 		// assign dynamic space for current student
 		*(students + i) = (char**)malloc(numberOfCourses * sizeof(char*));
@@ -138,25 +137,23 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 		// get name
 		token = strtok(lineBuffer, s);
 
-		int j = 0;
-
 		// assign space for student name
-		*(*(students+i)+j) = (char*)malloc((strlen(token)+1) * sizeof(char));
+		**(students + i) = (char*)malloc(strlen(token) * sizeof(char));
 
 		// insert name to array
-		strcpy((*(*(students + i) + j)),token);
+		**(students + i) = token;
 
-		j++;
+		int j = 1;
 
 		token = strtok(NULL, s);
 
-		while(token != NULL)
+		while (token != NULL)
 		{
-			// assign space for course
-			*(*(students + i) + j) = (char*)malloc((strlen(token)+1) * sizeof(char));
+			// assign space for student name or course
+			*((*(students + i)) + j) = (char*)malloc(strlen(token) * sizeof(char));
 
-			// insert course to array
-			strcpy((*(*(students + i) + j)),token);
+			// insert name or course to array
+			*((*(students + i)) + j) = token;
 
 			j++;
 
@@ -172,16 +169,16 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 
 void factorGivenCourse(char** const* students, const int* coursesPerStudent, int numberOfStudents, const char* courseName, int factor)
 {
-	if (factor > 20 || factor < -20) 
+	if (factor > 20 || factor < -20)
 	{
 		printf("Factor out of range must be between -20 to 20");
-		return; 
+		return;
 	}
 
 	for (int i = 0; i < numberOfStudents; i++)
 	{
-		int numberOfCourses = ((*(coursesPerStudent + i)) * 2);
-		for (int j = 1; j < numberOfCourses; j++)
+		int numberOfCourses = (*(coursesPerStudent + i) * 2);
+		for (int j = 1; j < numberOfCourses + 1; j++)
 		{
 			char* currentCourse = *(*(students + i) + j);
 
@@ -224,13 +221,13 @@ void studentsToFile(char*** students, int* coursesPerStudent, int numberOfStuden
 	for (int i = 0; i < numberOfStudents; i++)
 	{
 		fputs(*(*(students + i)), fp);
-		
+
 		int numberOfCourses = (*(coursesPerStudent + i) * 2);
-		for (int j = 1; j < numberOfCourses + 1; j+=2)
+		for (int j = 1; j < numberOfCourses + 1; j += 2)
 		{
 			char* currentCourse = *(*(students + i) + j);
 			char* currentGrade = *(*(students + i) + j + 1);
-			
+
 			fputc('|', fp);
 			fputs(currentCourse, fp);
 			fputc(',', fp);

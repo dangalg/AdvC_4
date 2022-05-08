@@ -250,6 +250,19 @@ void studentsToFile(char*** students, int* coursesPerStudent, int numberOfStuden
 	}
 
 	fclose(fp);
+
+	// release memory
+	for (int i = 0; i < numberOfStudents; i++)
+	{
+		int numberOfCourses = (*(coursesPerStudent + i));
+		for (int j = 0; j < numberOfCourses; j++)
+		{
+			printf("i:%d j%d\n", i, j);
+			free(*(*(students + i) + j));
+		}
+	}
+
+	free(coursesPerStudent);
 }
 
 void writeToBinFile(const char* fileName, Student* students, int numberOfStudents)

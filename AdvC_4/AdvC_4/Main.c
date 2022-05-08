@@ -76,14 +76,12 @@ void countStudentsAndCourses(const char* fileName, int** coursesPerStudent, int*
 	}
 
 	rewind(fp);
+	*(coursesPerStudent) = (int*)malloc(*numberOfStudents * sizeof(int));
 
 	for (int i = 0; i < *numberOfStudents; i++)
 	{
 		fgets(lineBuffer, MAX_LINE_LENGTH, fp);
-		(*(coursesPerStudent + i)) = (int*)malloc(sizeof(int));
-		*(*(coursesPerStudent + i)) = countPipes(lineBuffer, MAX_LINE_LENGTH);
-		i++;
-
+		*(*(coursesPerStudent)+i) = countPipes(lineBuffer, MAX_LINE_LENGTH);
 	}
 
 	fclose(fp);
@@ -124,7 +122,7 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 	for (int i = 0; i < *numberOfStudents; i++)
 	{
 		// number of courses
-		int numberOfCourses = ((*(*(coursesPerStudent + i)))*2)+1;
+		int numberOfCourses = (*(*(coursesPerStudent)+i)*2)+1;
 
 		// assign dynamic space for current student
 		*(students + i) = (char**)malloc(numberOfCourses * sizeof(char*));
@@ -180,7 +178,7 @@ void factorGivenCourse(char** const* students, const int* coursesPerStudent, int
 
 	for (int i = 0; i < numberOfStudents; i++)
 	{
-		int numberOfCourses = ((*(coursesPerStudent + i)) * 2);
+		int numberOfCourses = (*(coursesPerStudent + i) * 2);
 		for (int j = 1; j < numberOfCourses; j++)
 		{
 			char* currentCourse = *(*(students + i) + j);

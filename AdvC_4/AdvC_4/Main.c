@@ -1,9 +1,8 @@
 #define _CRT_SECURE_NO_WARNINGS
-/*#define _CRTDBG_MAP_ALLOC
+#define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
-#include <crtdbg.h>*/ //uncomment this block to check for heap memory allocation leaks.
+#include <crtdbg.h> //uncomment this block to check for heap memory allocation leaks.
 // Read https://docs.microsoft.com/en-us/visualstudio/debugger/finding-memory-leaks-using-the-crt-library?view=vs-2019
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -36,6 +35,8 @@ void studentsToFile(char*** students, int* coursesPerStudent, int numberOfStuden
 Student* transformStudentArray(char*** students, const int* coursesPerStudent, int numberOfStudents);
 void writeToBinFile(const char* fileName, Student* students, int numberOfStudents);
 Student* readFromBinFile(const char* fileName);
+void releaseMemory(char*** students, int* coursesPerStudent, int numberOfStudents);
+void releaseStructMemory(Student* transformedStudents, int numberOfStudents);
 
 int main()
 {
@@ -45,19 +46,19 @@ int main()
 	char*** students = makeStudentArrayFromFile("studentList.txt", &coursesPerStudent, &numberOfStudents);
 	factorGivenCourse(students, coursesPerStudent, numberOfStudents, "Advanced Topics in C", +5);
 	printStudentArray(students, coursesPerStudent, numberOfStudents);
-	studentsToFile(students, coursesPerStudent, numberOfStudents); //this frees all memory. Part B fails if this line runs. uncomment for testing (and comment out Part B)
+	//studentsToFile(students, coursesPerStudent, numberOfStudents); //this frees all memory. Part B fails if this line runs. uncomment for testing (and comment out Part B)
 
 	//Part B
-	//Student* transformedStudents = transformStudentArray(students, coursesPerStudent, numberOfStudents);
-	//writeToBinFile("students.bin", transformedStudents, numberOfStudents);
-	//Student* testReadStudents = readFromBinFile("students.bin");
+	Student* transformedStudents = transformStudentArray(students, coursesPerStudent, numberOfStudents);
+	writeToBinFile("students1.bin", transformedStudents, numberOfStudents);
+	Student* testReadStudents = readFromBinFile("students.bin");
 
 	//add code to free all arrays of struct Student
+	releaseMemory(students, coursesPerStudent, numberOfStudents);
+	releaseStructMemory(transformedStudents, numberOfStudents);
 
-
-	/*_CrtDumpMemoryLeaks();*/ //uncomment this block to check for heap memory allocation leaks.
+	_CrtDumpMemoryLeaks(); //uncomment this block to check for heap memory allocation leaks.
 	// Read https://docs.microsoft.com/en-us/visualstudio/debugger/finding-memory-leaks-using-the-crt-library?view=vs-2019
-
 	return 0;
 }
 
@@ -113,6 +114,7 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 
 	// assign dynamic space for all students
 	char*** students = (char***)malloc((*numberOfStudents) * sizeof(char**));
+	if (!students) { printf("memory allocation error"); exit(1); }
 
 	char lineBuffer[MAX_LINE_LENGTH];
 	FILE* fp = fopen(fileName, "r");
@@ -126,6 +128,7 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 
 		// assign dynamic space for current student
 		*(students + i) = (char**)malloc(numberOfCourses * sizeof(char*));
+		if (!(*(students + i))) { printf("memory allocation error"); exit(1); }
 
 		// get line from file
 		fgets(lineBuffer, MAX_LINE_LENGTH, fp);
@@ -152,6 +155,7 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 
 		// assign space for student name
 		*(*(students+i)+j) = (char*)malloc((strlen(token)+1) * sizeof(char));
+		if (!(*(*(students + i) + j))) { printf("memory allocation error"); exit(1); }
 
 		// insert name to array
 		strcpy((*(*(students + i) + j)),token);
@@ -164,6 +168,7 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 		{
 			// assign space for course
 			*(*(students + i) + j) = (char*)malloc((strlen(token)+1) * sizeof(char));
+			if (!(*(*(students + i) + j))) { printf("memory allocation error"); exit(1); }
 
 			// insert course to array
 			strcpy((*(*(students + i) + j)),token);
@@ -205,7 +210,7 @@ void factorGivenCourse(char** const* students, const int* coursesPerStudent, int
 				grade += factor;
 				char* buffer[3];
 				// return factored grade to list
-				*(*(students + i) + j + 1) = _itoa(grade, buffer, 10);
+				strcpy(*(*(students + i) + j + 1) ,_itoa(grade, buffer, 10));
 			}
 		}
 	}
@@ -251,10 +256,111 @@ void studentsToFile(char*** students, int* coursesPerStudent, int numberOfStuden
 
 	fclose(fp);
 
+	releaseMemory(students, coursesPerStudent, numberOfStudents);
+}
+
+void writeToBinFile(const char* fileName, Student* students, int numberOfStudents)
+{
+	FILE* fp = fopen("studentList.bin", "wb");
+	assert(fp);
+
+	fwrite(&numberOfStudents, sizeof(int), 1, fp);
+
+	for (int i = 0; i < numberOfStudents; i++)
+	{
+		// write student name
+		fwrite(students[i].name, 35 * sizeof(char), 1, fp);
+		
+		// write number of courses
+		fwrite(&students[i].numberOfCourses, sizeof(int), 1, fp);
+
+		// get courses
+		int numberOfCourses = students[i].numberOfCourses;
+		for (int j = 0; j < students[i].numberOfCourses; j++)
+		{
+			// write course name
+			fwrite(students[i].grades[j].courseName, 35 * sizeof(char), 1, fp);
+
+			// write course grade
+			fwrite(&students[i].grades[j].grade, sizeof(int), 1, fp);
+		}
+	}
+
+	fclose(fp);
+}
+
+Student* readFromBinFile(const char* fileName)
+{
+	FILE* fp = fopen("studentList.bin", "rb");
+	assert(fp);
+
+	int numberOfStudents = 0;
+	fread(&numberOfStudents, sizeof(int), 1, fp);
+
+	Student* studentsStruct = (Student*)malloc(numberOfStudents * sizeof(Student));
+	if (!studentsStruct) { printf("memory allocation error"); exit(1); }
+
+	for (int i = 0; i < numberOfStudents; i++)
+	{
+		// get student name
+		fread(studentsStruct[i].name, 35 * sizeof(char), 1, fp);
+
+		// get student numbers of courses
+		fread(&studentsStruct[i].numberOfCourses, sizeof(int), 1, fp);
+
+		// assign memory for grades
+		studentsStruct[i].grades = (StudentCourseGrade*)malloc(studentsStruct[i].numberOfCourses * sizeof(StudentCourseGrade));
+		if (!studentsStruct[i].grades) { printf("memory allocation error"); exit(1); }
+
+		// get courses
+		int numberOfCourses = studentsStruct[i].numberOfCourses;
+		for (int j = 0; j < studentsStruct[i].numberOfCourses; j++)
+		{
+			// write course name
+			fread(studentsStruct[i].grades[j].courseName, 35 * sizeof(char), 1, fp);
+
+			// write course grade
+			fread(&studentsStruct[i].grades[j].grade, sizeof(int), 1, fp);
+		}
+	}
+
+	fclose(fp);
+
+	return studentsStruct;
+}
+
+Student* transformStudentArray(char*** students, const int* coursesPerStudent, int numberOfStudents)
+{
+	Student* studentsStruct = (Student*)malloc(numberOfStudents * sizeof(Student));
+	if(!studentsStruct) { printf("memory allocation error"); exit(1); }
+
+	for (int i = 0; i < numberOfStudents; i++)
+	{
+		// get student name
+		strcpy(studentsStruct[i].name, *(*(students + i)));
+		studentsStruct[i].numberOfCourses = *(coursesPerStudent + i);
+
+		// assign memory for grades
+		studentsStruct[i].grades = (StudentCourseGrade*)malloc(studentsStruct[i].numberOfCourses * sizeof(StudentCourseGrade));
+		if (!studentsStruct[i].grades) { printf("memory allocation error"); exit(1); }
+		// get courses
+		int numberOfCourses = ((*(coursesPerStudent + i)) * 2);
+		for (int j = 1, k=0; j < numberOfCourses; j+=2, k++)
+		{
+			strcpy(studentsStruct[i].grades[k].courseName, *(*(students + i) + j));
+			studentsStruct[i].grades[k].grade = atoi(*(*(students + i) + j + 1));
+		}
+	}
+
+	return studentsStruct;
+}
+
+void releaseMemory(char*** students, int* coursesPerStudent, int numberOfStudents)
+{
 	// release memory
 	for (int i = 0; i < numberOfStudents; i++)
 	{
-		int numberOfCourses = (*(coursesPerStudent + i));
+		int numberOfCourses = ((*(coursesPerStudent + i))*2)+1;
 		for (int j = 0; j < numberOfCourses; j++)
 		{
 			printf("i:%d j%d\n", i, j);
@@ -262,21 +368,23 @@ void studentsToFile(char*** students, int* coursesPerStudent, int numberOfStuden
 		}
 	}
 
+	for (int i = 0; i < numberOfStudents; i++)
+	{
+		free(*(students + i));
+	}
+
 	free(coursesPerStudent);
+
+	free(students);
 }
 
-void writeToBinFile(const char* fileName, Student* students, int numberOfStudents)
+void releaseStructMemory(Student* transformedStudents, int numberOfStudents)
 {
-	//add code here
-}
+	for (int i = 0; i < numberOfStudents; i++)
+	{
+		// free memory for grades
+		free(transformedStudents[i].grades);
+	}
 
-Student* readFromBinFile(const char* fileName)
-{
-	//add code here
+	free(transformedStudents);
 }
-
-Student* transformStudentArray(char*** students, const int* coursesPerStudent, int numberOfStudents)
-{
-	//add code here
-}
-

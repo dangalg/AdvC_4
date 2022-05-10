@@ -1,4 +1,4 @@
-Avi|Linear Algebra,84|Complexity Theory,99|Infi 1,88|Discrete Mathematics,7|Data Structures,100
+Avi|Linear Algebra,84|Complexity Theory,99|Infi 1,88|Discrete Mathematics,73|Data Structures,100
 Yarden|Discrete Mathematics,87|Advanced Topics in C,95
 Sivan|Advanced Topics in C,105|Algorithms,84
 Tal|Infi 2,97

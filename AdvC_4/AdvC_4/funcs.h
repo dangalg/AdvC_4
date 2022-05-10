@@ -2,6 +2,7 @@
 #include <assert.h>
 
 #define MAX_LINE_LENGTH 1023
+#define FACTOR_RANGE 20
 
 typedef struct StudentCourseGrade
 {

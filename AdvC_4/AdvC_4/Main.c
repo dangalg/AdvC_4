@@ -65,7 +65,7 @@ int main()
 void countStudentsAndCourses(const char* fileName, int** coursesPerStudent, int* numberOfStudents)
 {
 	FILE* fp = fopen(fileName, "r");
-	assert(fp);
+	if (fp == NULL) { printf("Can't open file\n"); exit(1); }
 	rewind(fp);
 
 	*numberOfStudents = 0;
@@ -118,7 +118,7 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 
 	char lineBuffer[MAX_LINE_LENGTH];
 	FILE* fp = fopen(fileName, "r");
-	assert(fp);
+	if (fp == NULL) { printf("Can't open file\n"); exit(1); }
 	rewind(fp);
 
 	for (int i = 0; i < *numberOfStudents; i++)
@@ -233,7 +233,7 @@ void printStudentArray(const char* const* const* students, const int* coursesPer
 void studentsToFile(char*** students, int* coursesPerStudent, int numberOfStudents)
 {
 	FILE* fp = fopen("studentList1.txt", "w");
-	assert(fp);
+	if (fp == NULL) { printf("Can't open file\n"); exit(1); }
 	rewind(fp);
 
 	for (int i = 0; i < numberOfStudents; i++)
@@ -262,7 +262,7 @@ void studentsToFile(char*** students, int* coursesPerStudent, int numberOfStuden
 void writeToBinFile(const char* fileName, Student* students, int numberOfStudents)
 {
 	FILE* fp = fopen("studentList.bin", "wb");
-	assert(fp);
+	if (fp == NULL) { printf("Can't open file\n"); exit(1); }
 
 	fwrite(&numberOfStudents, sizeof(int), 1, fp);
 
@@ -292,7 +292,7 @@ void writeToBinFile(const char* fileName, Student* students, int numberOfStudent
 Student* readFromBinFile(const char* fileName)
 {
 	FILE* fp = fopen("studentList.bin", "rb");
-	assert(fp);
+	if (fp == NULL) { printf("Can't open file\n"); exit(1); }
 
 	int numberOfStudents = 0;
 	fread(&numberOfStudents, sizeof(int), 1, fp);

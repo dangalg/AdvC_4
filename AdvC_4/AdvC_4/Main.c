@@ -5,23 +5,7 @@
 // Read https://docs.microsoft.com/en-us/visualstudio/debugger/finding-memory-leaks-using-the-crt-library?view=vs-2019
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
-
-#define MAX_LINE_LENGTH 1023
-
-typedef struct StudentCourseGrade
-{
-	char courseName[35];
-	int grade;
-}StudentCourseGrade;
-
-typedef struct Student
-{
-	char name[35];
-	StudentCourseGrade* grades; //dynamic array of courses
-	int numberOfCourses;
-}Student;
-
+#include "funcs.h"
 
 //Part A
 void countStudentsAndCourses(const char* fileName, int** coursesPerStudent, int* numberOfStudents);
@@ -35,8 +19,7 @@ void studentsToFile(char*** students, int* coursesPerStudent, int numberOfStuden
 Student* transformStudentArray(char*** students, const int* coursesPerStudent, int numberOfStudents);
 void writeToBinFile(const char* fileName, Student* students, int numberOfStudents);
 Student* readFromBinFile(const char* fileName);
-void releaseMemory(char*** students, int* coursesPerStudent, int numberOfStudents);
-void releaseStructMemory(Student* transformedStudents, int numberOfStudents);
+
 
 int main()
 {
@@ -85,7 +68,7 @@ void countStudentsAndCourses(const char* fileName, int** coursesPerStudent, int*
 		*(*(coursesPerStudent)+i) = countPipes(lineBuffer, MAX_LINE_LENGTH);
 	}
 
-	fclose(fp);
+	assert(fclose(fp)==0);
 }
 
 int countPipes(const char* lineBuffer, int maxCount)
@@ -180,7 +163,7 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 
 	}
 
-	fclose(fp);
+	assert(fclose(fp)==0);
 
 	return students;
 }
@@ -254,7 +237,7 @@ void studentsToFile(char*** students, int* coursesPerStudent, int numberOfStuden
 		fputc('\n', fp);
 	}
 
-	fclose(fp);
+	assert(fclose(fp)==0);
 
 	releaseMemory(students, coursesPerStudent, numberOfStudents);
 }
@@ -286,7 +269,7 @@ void writeToBinFile(const char* fileName, Student* students, int numberOfStudent
 		}
 	}
 
-	fclose(fp);
+	assert(fclose(fp)==0);
 }
 
 Student* readFromBinFile(const char* fileName)
@@ -324,7 +307,7 @@ Student* readFromBinFile(const char* fileName)
 		}
 	}
 
-	fclose(fp);
+	assert(fclose(fp)==0);
 
 	return studentsStruct;
 }

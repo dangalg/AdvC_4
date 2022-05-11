@@ -5,7 +5,23 @@
 // Read https://docs.microsoft.com/en-us/visualstudio/debugger/finding-memory-leaks-using-the-crt-library?view=vs-2019
 #include <stdio.h>
 #include <string.h>
-#include "funcs.h"
+#include <assert.h>
+
+#define MAX_LINE_LENGTH 1023
+#define FACTOR_RANGE 20
+
+typedef struct StudentCourseGrade
+{
+	char courseName[35];
+	int grade;
+}StudentCourseGrade;
+
+typedef struct Student
+{
+	char name[35];
+	StudentCourseGrade* grades; //dynamic array of courses
+	int numberOfCourses;
+}Student;
 
 //Part A
 void countStudentsAndCourses(const char* fileName, int** coursesPerStudent, int* numberOfStudents);
@@ -19,6 +35,9 @@ void studentsToFile(char*** students, int* coursesPerStudent, int numberOfStuden
 Student* transformStudentArray(char*** students, const int* coursesPerStudent, int numberOfStudents);
 void writeToBinFile(const char* fileName, Student* students, int numberOfStudents);
 Student* readFromBinFile(const char* fileName);
+
+void releaseMemory(char*** students, int* coursesPerStudent, int numberOfStudents);
+void releaseStructMemory(Student* transformedStudents, int numberOfStudents);
 
 
 int main()

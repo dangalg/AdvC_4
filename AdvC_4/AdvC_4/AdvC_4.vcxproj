@@ -147,9 +147,6 @@
   <ItemGroup>
     <None Include="..\students.bin" />
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="funcs.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

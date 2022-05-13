@@ -162,7 +162,7 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 			
 
 		char* token;
-		const char s[2] = "|,";
+		const char s[3] = "|,";
 
 		// get name
 		token = strtok(lineBuffer, s);
